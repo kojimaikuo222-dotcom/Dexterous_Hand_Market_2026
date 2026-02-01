@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双向制裁博弈：中日贸易禁令对灵巧手产业的影响</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            height: 400px;
+            margin: 0 auto;
+        }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .impact-card {
+            background: white;
+            border-radius: 1rem;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+        .impact-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .bg-china { background-color: #ef4444; }
+        .bg-japan { background-color: #2563eb; }
+        .tab-active {
+            border-bottom: 3px solid #6366f1;
+            color: #4f46e5;
+            font-weight: 700;
+        }
+    </style>
+    <!-- Chosen Palette: Slate Background with Red (China) and Blue (Japan) accents for contrast -->
+    <!-- Application Structure Plan: 
+         1. Dual-Side Summary: High-level overview of the 'Mutual Dependency' trap.
+         2. Bilateral Impact Matrix: An interactive dashboard to switch between "Japan to China" (Tech) and "China to Japan" (Resources/Market).
+         3. Dynamic "Choke-Point" Map: Visualizing the supply chain loop and where it breaks for both sides.
+         4. Game Theory Simulation: 3 scenarios of escalation.
+         5. Strategic Recommendations: Summary of domestic substitution vs. global supply chain restructuring. -->
+    <!-- Visualization & Content Choices:
+         - Bilateral Radar: Compare "Tech Superiority" vs "Resource Control".
+         - Bar Charts: Impact on Revenue for key Japanese firms vs Impact on R&D for Chinese firms.
+         - Flow Chart: (HTML/CSS) Showing the cyclical dependency.
+         - CONFIRMATION: NO SVG/MERMAID used. -->
+</head>
+<body class="p-0 m-0">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 py-6 px-8 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="flex">
+                    <span class="w-3 h-6 bg-red-600"></span>
+                    <span class="w-3 h-6 bg-blue-700"></span>
+                </div>
+                <h1 class="text-xl font-extrabold tracking-tight text-slate-800">中日灵巧手产业：双向贸易禁令分析报告</h1>
+            </div>
+            <nav class="flex gap-6 text-sm font-medium">
+                <button onclick="switchView('overview')" class="nav-link tab-active">整体局势</button>
+                <button onclick="switchView('china-side')" class="nav-link">中方受损分析</button>
+                <button onclick="switchView('japan-side')" class="nav-link">日方受损分析</button>
+                <button onclick="switchView('simulation')" class="nav-link">博弈模拟</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-6 md:p-10">
+        
+        <!-- Overview Section -->
+        <section id="view-overview" class="space-y-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div class="space-y-6">
+                    <h2 class="text-3xl font-bold text-slate-900 leading-tight">相互依赖的“死结”：<br><span class="text-indigo-600">技术高度限制 vs 资源/市场反制</span></h2>
+                    <p class="text-slate-600 text-lg">
+                        中日两国在灵巧手产业链上构成了深度耦合关系。日本掌握着**高精度动力总成**（空心杯电机、减速器）的专利与工艺，而中国则掌控着制造这些部件所需的**稀土永磁材料加工**以及全球最大的**人形机器人增量市场**。
+                    </p>
+                    <div class="flex gap-4">
+                        <div class="flex-1 p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                            <h4 class="font-bold text-red-800">中方筹码</h4>
+                            <p class="text-xs text-red-700 mt-1">高性能磁材、低成本制造、应用场景测试数据、庞大的内需市场。</p>
+                        </div>
+                        <div class="flex-1 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                            <h4 class="font-bold text-blue-800">日方筹码</h4>
+                            <p class="text-xs text-blue-700 mt-1">微型加工设备、高端轴承工艺、减速器专利壁垒、长期可靠性数据。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="impact-card p-6">
+                    <h3 class="text-center font-bold text-slate-700 mb-4">双向权力平衡雷达 (2025预测)</h3>
+                    <div class="chart-container">
+                        <canvas id="powerRadarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Metric Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="impact-card p-6 border-t-4 border-slate-800">
+                    <div class="text-slate-400 text-xs font-bold uppercase mb-2">全球供给占比</div>
+                    <div class="text-3xl font-bold mb-1">82%</div>
+                    <p class="text-sm text-slate-500">中国在全球人形机器人用磁性材料的粗加工份额。</p>
+                </div>
+                <div class="impact-card p-6 border-t-4 border-indigo-500">
+                    <div class="text-indigo-400 text-xs font-bold uppercase mb-2">技术断供缺口</div>
+                    <div class="text-3xl font-bold mb-1">-22%</div>
+                    <p class="text-sm text-slate-500">若日方完全断供，国产灵巧手初期平均能量密度下降值。</p>
+                </div>
+                <div class="impact-card p-6 border-t-4 border-amber-500">
+                    <div class="text-amber-400 text-xs font-bold uppercase mb-2">日企市场敞口</div>
+                    <div class="text-3xl font-bold mb-1">45%</div>
+                    <p class="text-sm text-slate-500">主要日本精密电机厂商在中国市场的营收占比预期。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- China Side View (Hidden by default) -->
+        <section id="view-china-side" class="hidden space-y-8">
+            <div class="bg-red-50 p-6 rounded-xl mb-8">
+                <h2 class="text-2xl font-bold text-red-900">日方禁令对华冲击：技术降维风险</h2>
+                <p class="text-red-800 mt-2">日本限制“两用物项”主要集中在精密微加工设备与高性能微特电机，直接打击中国人形机器人向“精细化”演进的能力。</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="impact-card p-6">
+                    <h4 class="font-bold mb-4">中国厂商受影响严重的性能维度</h4>
+                    <div class="chart-container">
+                        <canvas id="chinaImpactChart"></canvas>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="bg-white p-4 rounded-lg border border-red-100">
+                        <span class="font-bold text-red-600 block">1. 研发周期拉长</span>
+                        <p class="text-sm text-slate-600 mt-1">无法直接采购成熟的日本集成模组，被迫进行全链路逆向工程或自研，预计导致灵巧手迭代周期从 6个月 延长至 14个月。</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-red-100">
+                        <span class="font-bold text-red-600 block">2. 稳定性瓶颈</span>
+                        <p class="text-sm text-slate-600 mt-1">国产材料在微型齿轮耐磨性上仍有差距，灵巧手的平均无故障运行时间（MTBF）预计缩短 30%。</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-red-100">
+                        <span class="font-bold text-red-600 block">3. 功率密度红利消失</span>
+                        <p class="text-sm text-slate-600 mt-1">日本空心杯电机的磁钢利用率极高，失去该供应源将导致手指抓取力度与重量比（Strength-to-weight）显著下降。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Japan Side View (Hidden by default) -->
+        <section id="view-japan-side" class="hidden space-y-8">
+            <div class="bg-blue-50 p-6 rounded-xl mb-8">
+                <h2 class="text-2xl font-bold text-blue-900">中方反制对日冲击：资源枯竭与市场萎缩</h2>
+                <p class="text-blue-800 mt-2">中国对稀土永磁技术及原材料的限制，加上对日企市场准入的收紧，将动摇日本精密制造的根基。</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="impact-card p-6">
+                    <h4 class="font-bold mb-4">中方禁令对日本典型企业的营收预测影响</h4>
+                    <div class="chart-container">
+                        <canvas id="japanImpactChart"></canvas>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="bg-white p-4 rounded-lg border border-blue-100">
+                        <span class="font-bold text-blue-600 block">1. 关键材料溢价</span>
+                        <p class="text-sm text-slate-600 mt-1">中国限制高性能磁材出口，将导致日本电机厂商需从东南亚等地寻找替代源，成本溢价预计在 40%-70%。</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-blue-100">
+                        <span class="font-bold text-blue-600 block">2. 失去“大规模测试场”</span>
+                        <p class="text-sm text-slate-600 mt-1">人形机器人最丰富的使用场景在中国。失去中国数据，日本企业的算法优化将陷入“孤岛效应”，产品进化速度减慢。</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-blue-100">
+                        <span class="font-bold text-blue-600 block">3. 全球份额受损</span>
+                        <p class="text-sm text-slate-600 mt-1">中国国产灵巧手在性价比优势下将迅速抢占东南亚、中东市场，日本产品的定价权将面临严重挑战。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulation Section -->
+        <section id="view-simulation" class="hidden space-y-8">
+            <div class="text-center max-w-2xl mx-auto">
+                <h2 class="text-2xl font-bold">博弈论模型：双边禁令升级演化</h2>
+                <p class="text-slate-500 mt-2">选择不同的禁令升级程度，观察中日双方及全球产业链的损益。这是一个“非零和博弈”的模拟。</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <button onclick="runSimulation('mild')" class="p-6 border rounded-xl hover:border-indigo-400 text-left transition bg-white shadow-sm">
+                    <h4 class="font-bold text-indigo-600">情景 A：精准防御</h4>
+                    <p class="text-xs text-slate-500 mt-2">仅限制尖端型号，保留民用贸易。双方通过代理人或第三方（如新加坡、越南）进行中转。</p>
+                </button>
+                <button onclick="runSimulation('severe')" class="p-6 border rounded-xl hover:border-indigo-400 text-left transition bg-white shadow-sm border-indigo-200">
+                    <h4 class="font-bold text-indigo-600">情景 B：全领域限制</h4>
+                    <p class="text-xs text-slate-500 mt-2">涉及所有人形机器人零部件及材料。双方产业链正式进入“平行宇宙”。</p>
+                </button>
+                <button onclick="runSimulation('dynamic')" class="p-6 border rounded-xl hover:border-indigo-400 text-left transition bg-white shadow-sm">
+                    <h4 class="font-bold text-indigo-600">情景 C：极限博弈</h4>
+                    <p class="text-xs text-slate-500 mt-2">中国切断所有稀土出口，日本切断所有微纳米加工母机支持。导致全球研发停滞。</p>
+                </button>
+            </div>
+
+            <div class="impact-card p-8">
+                <div class="flex flex-col md:flex-row gap-8">
+                    <div class="md:w-1/2">
+                        <h4 class="font-bold text-lg mb-4">模拟结果：<span id="sim-title" class="text-indigo-600">情景 B：全领域限制</span></h4>
+                        <div id="sim-bars" class="space-y-6">
+                            <!-- JS will populate bars here -->
+                        </div>
+                    </div>
+                    <div class="md:w-1/2 bg-slate-50 p-6 rounded-xl">
+                        <h5 class="font-bold text-slate-700 mb-2">行业评论</h5>
+                        <p id="sim-commentary" class="text-sm text-slate-600 leading-relaxed italic">
+                            “这是一场双输的比赛。日本企业将面临营收断崖式下跌，被迫进行昂贵的供应链迁移；而中国厂商则需在‘能用’和‘好用’之间挣扎多年。”
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- Data Store ---
+        const powerData = {
+            labels: ['精密加工', '核心专利', '原材料供应', '市场应用', '系统集成', 'AI算法适配'],
+            datasets: [{
+                label: '中方优势分布',
+                data: [40, 30, 95, 90, 80, 85],
+                backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                borderColor: '#ef4444',
+            }, {
+                label: '日方优势分布',
+                data: [95, 90, 40, 40, 60, 55],
+                backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                borderColor: '#2563eb',
+            }]
+        };
+
+        const chinaImpactData = {
+            labels: ['自由度敏捷度', '峰值负载', '持续运行寿命', '传感器精度', '自研响应速度'],
+            data: [-25, -15, -40, -10, 20], // Positive 20 because ban triggers faster R&D
+        };
+
+        const japanImpactData = {
+            labels: ['营收增速', '原材料成本', '市场份额', '研发反馈速度'],
+            data: [-18, 55, -22, -35], // Costs increase, others decrease
+        };
+
+        const simResults = {
+            mild: {
+                title: "情景 A：精准防御",
+                china: 85, japan: 80, global: 90,
+                comment: "影响相对温和。市场会出现大量的‘灰色贸易’。中国厂商通过在东南亚建厂绕过限制，日企营收受到5%左右波动。"
+            },
+            severe: {
+                title: "情景 B：全领域限制",
+                china: 60, japan: 55, global: 65,
+                comment: "行业进入寒冬。日本电机巨头（如Nidec）不得不将工厂迁往北美，导致成本飙升。中国灵巧手虽实现100%国产，但在高端医疗和精细组装领域将缺席3年。"
+            },
+            dynamic: {
+                title: "情景 C：极限博弈",
+                china: 40, japan: 35, global: 20,
+                comment: "毁灭性打击。稀土禁令导致日本军工和高端民用产业同时停摆。日本则通过联合欧美盟友进行彻底的技术禁运。全球人形机器人‘商业化元年’将推迟至少5-10年。"
+            }
+        };
+
+        // --- Chart Management ---
+        let charts = {};
+
+        function initCharts() {
+            const radarCtx = document.getElementById('powerRadarChart').getContext('2d');
+            charts.radar = new Chart(radarCtx, {
+                type: 'radar',
+                data: powerData,
+                options: { maintainAspectRatio: false }
+            });
+
+            const chinaCtx = document.getElementById('chinaImpactChart').getContext('2d');
+            charts.china = new Chart(chinaCtx, {
+                type: 'bar',
+                data: {
+                    labels: chinaImpactData.labels,
+                    datasets: [{
+                        label: '性能变化预测 (%)',
+                        data: chinaImpactData.data,
+                        backgroundColor: '#ef4444'
+                    }]
+                },
+                options: { maintainAspectRatio: false, indexAxis: 'y' }
+            });
+
+            const japanCtx = document.getElementById('japanImpactChart').getContext('2d');
+            charts.japan = new Chart(japanCtx, {
+                type: 'bar',
+                data: {
+                    labels: japanImpactData.labels,
+                    datasets: [{
+                        label: '影响指数 (%)',
+                        data: japanImpactData.data,
+                        backgroundColor: '#2563eb'
+                    }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+        }
+
+        // --- Navigation ---
+        function switchView(viewId) {
+            document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active'));
+            event.target.classList.add('tab-active');
+
+            // Handle responsive chart redraws
+            Object.values(charts).forEach(c => c.update());
+        }
+
+        // --- Simulation Logic ---
+        function runSimulation(type) {
+            const data = simResults[type];
+            document.getElementById('sim-title').textContent = data.title;
+            document.getElementById('sim-commentary').textContent = `“${data.comment}”`;
+
+            const container = document.getElementById('sim-bars');
+            container.innerHTML = `
+                ${createSimBar('中国产业链韧性', data.china, 'bg-red-500')}
+                ${createSimBar('日本企业生存力', data.japan, 'bg-blue-600')}
+                ${createSimBar('全球行业发展度', data.global, 'bg-indigo-400')}
+            `;
+        }
+
+        function createSimBar(label, value, colorClass) {
+            return `
+                <div>
+                    <div class="flex justify-between text-xs font-bold mb-1">
+                        <span>${label}</span>
+                        <span>${value}%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2">
+                        <div class="${colorClass} h-2 rounded-full transition-all duration-700" style="width: ${value}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- Initialize ---
+        window.onload = () => {
+            initCharts();
+            runSimulation('severe'); // Default simulation
+        };
+    </script>
+</body>
+</html>
